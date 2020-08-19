@@ -72,12 +72,13 @@ def generate_languages(headers, language_api_url, documents):
 # Tweets to that same data frame 
 # Returns: Tweet data into JSON format
 def combine_lang_data(documents, with_languages):
-    langs = pd.DataFrame(with_languages["documents"])
+    print(with_languages)
+    langs = pd.DataFrame(with_languages['documents'])
     lang_iso = [x.get("iso6391Name")
                 for d in langs.detectedLanguages if d for x in d]
-    data_only = documents["documents"]
+    data_only = documents['documents']
     tweet_data = pd.DataFrame(data_only)
-    tweet_data.insert(2, "language", lang_iso, True)
+    tweet_data.insert(2, 'language', lang_iso, True)
     json_lines = tweet_data.to_json(orient="records")
     return json_lines
   
