@@ -8,8 +8,9 @@ import os
 
 # Tutorial: https://developer.twitter.com/en/docs/tutorials/how-to-analyze-the-sentiment-of-your-own-tweets
 
-def create_twitter_url():
-    handle = "jessicagarson"
+company_handles = ['nickjonas','Twitter', 'Facebook', 'reddit', 'instagram', 'netflix', 'Google', 'Microsoft', 'Apple', 'IBM', 'YouTube', 'Pinterest', 'Airbnb', 'amazon', 'Square', 'NotionHQ']
+
+def create_twitter_url(handle):
     max_results = 100  # between 1 and 100
     mrf = "max_results={}".format(max_results)
     q = "query=from:{}".format(handle)
@@ -39,7 +40,8 @@ def twitter_auth_and_connect(bearer_token, url):
 # Input: JSON of GET request
 # Returns: AST of data (dictionary?)
 def lang_data_shape(res_json):
-    data_only = res_json["data"]
+    print(res_json)
+    data_only = res_json['data']
     doc_start = '"documents": {}'.format(data_only)
     str_json = "{" + doc_start + "}"
     dump_doc = json.dumps(str_json)
@@ -72,7 +74,6 @@ def generate_languages(headers, language_api_url, documents):
 # Tweets to that same data frame 
 # Returns: Tweet data into JSON format
 def combine_lang_data(documents, with_languages):
-    print(with_languages)
     langs = pd.DataFrame(with_languages['documents'])
     lang_iso = [x.get("iso6391Name")
                 for d in langs.detectedLanguages if d for x in d]
@@ -111,20 +112,25 @@ def week_logic(week_score):
         print("You had a negative week, I hope it gets better")
   
 def main():
-    url = create_twitter_url()
-    data = process_yaml()
-    bearer_token = create_bearer_token(data)
-    res_json = twitter_auth_and_connect(bearer_token, url)
-    documents = lang_data_shape(res_json)
-    language_api_url, sentiment_url, subscription_key = connect_to_azure(data)
-    headers = azure_header(subscription_key)
-    with_languages = generate_languages(headers, language_api_url, documents)
-    json_lines = combine_lang_data(documents, with_languages)
-    document_format = add_document_format(json_lines)
-    sentiments = sentiment_scores(headers, sentiment_url, document_format)
-    week_score = mean_score(sentiments)
-    print(week_score)
-    week_logic(week_score)
+    for handle in company_handles:
+        print(handle)
+        url = create_twitter_url(handle)
+        data = process_yaml()
+        bearer_token = create_bearer_token(data)
+        res_json = twitter_auth_and_connect(bearer_token, url)
+        if res_json['meta']['result_count'] == 0:
+            print('NONE')
+            continue
+        documents = lang_data_shape(res_json)
+        language_api_url, sentiment_url, subscription_key = connect_to_azure(data)
+        headers = azure_header(subscription_key)
+        with_languages = generate_languages(headers, language_api_url, documents)
+        json_lines = combine_lang_data(documents, with_languages)
+        document_format = add_document_format(json_lines)
+        sentiments = sentiment_scores(headers, sentiment_url, document_format)
+        week_score = mean_score(sentiments)
+        week_logic(week_score)
+        print('\n')
   
 
 if __name__ == '__main__':
